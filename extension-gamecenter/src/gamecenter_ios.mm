@@ -404,7 +404,7 @@ static const luaL_reg Module_methods[] =
     {"showAchievements", showAchievements},
     {"submitAchievement", submitAchievement},
     {"setScoreCallback", setScoreCallback},
-    {"getPlayerScore", getPlayerScore}
+    {"getPlayerScore", getPlayerScore},
     //{"loadAchievements", loadAchievements},
     //{"resetAchievements", resetAchievements},
     {0, 0}
