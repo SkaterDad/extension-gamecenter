@@ -59,13 +59,17 @@ static void HandleScoreResult(const dmGameCenter::Command* cmd)
     lua_State* L = dmScript::GetCallbackLuaContext(cmd->m_Callback);
     DM_LUA_STACK_CHECK(L, 0);
 
+    dmLogInfo("score callback 1")
+
     if (!dmScript::SetupCallback(cmd->m_Callback))
     {
         return;
     }
     
+    dmLogInfo("score callback 2")
+
     if (cmd->m_leaderboardId) {     
-        dmLogInfo("score callback Result %s", cmd->m_score);
+        dmLogInfo("score callback Result %s", cmd->m_leaderboardId);
         lua_newtable(L);
         lua_pushinteger(L, cmd->m_score);
         lua_setfield(L, -2, "score");
