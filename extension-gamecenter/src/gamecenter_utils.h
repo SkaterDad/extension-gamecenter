@@ -39,7 +39,7 @@ namespace dmGameCenter
         const char* m_playerID;
         const char* m_alias;
         const char* m_leaderboardId;
-        uint64_t    m_Score;
+        uint64_t    m_score;
     };
 
     struct CommandQueue
