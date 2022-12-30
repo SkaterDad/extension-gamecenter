@@ -54,13 +54,43 @@ static void HandleRegistrationResult(const dmGameCenter::Command* cmd)
     dmLogInfo("TeardownCallback\n");
 }
 
+static void HandleScoreResult(const dmGameCenter::Command* cmd)
+{
+    lua_State* L = dmScript::GetCallbackLuaContext(cmd->m_Callback);
+    DM_LUA_STACK_CHECK(L, 0);
 
+    if (!dmScript::SetupCallback(cmd->m_Callback))
+    {
+        return;
+    }
+    
+    if (cmd->m_playerID) {     
+        dmLogInfo("score callback Result %s", cmd->m_score);
+        lua_newtable(L);
+        lua_pushinteger(L, cmd->m_score);
+        lua_setfield(L, -2, "score");
+        lua_pushstring(L, cmd->m_leaderboardId);
+        lua_setfield(L, -2, "leaderboardId");
+        lua_pushnil(L);
+    } else {
+        lua_pushnil(L);
+        PushError(L, cmd->m_Error);
+        dmLogError("GCM error %s", cmd->m_Error);
+    }
+
+    int ret = dmScript::PCall(L, 3, 0);
+    (void)ret;
+    dmLogInfo("PCALL\n");
+    dmScript::TeardownCallback(cmd->m_Callback);
+    dmLogInfo("TeardownCallback\n");
+}
 
 void dmGameCenter::HandleCommand(dmGameCenter::Command* cmd, void* ctx)
 {
     switch (cmd->m_Command)
     {
     case dmGameCenter::COMMAND_TYPE_REGISTRATION_RESULT:  HandleRegistrationResult(cmd); break;
+    case dmGameCenter::COMMAND_TYPE_SCORE_RESULT:  HandleScoreResult(cmd); break;
     default: assert(false);
     }
     //free((void*)cmd->m_Error);

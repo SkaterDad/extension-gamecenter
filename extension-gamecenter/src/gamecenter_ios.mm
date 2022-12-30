@@ -24,7 +24,7 @@ struct GameCenter
     }
 
     dmScript::LuaCallbackInfo*  m_Callback;
-    dmScript::LuaCallbackInfo*  m_Listener;
+    dmScript::LuaCallbackInfo*  m_ScoreCallback;
     id<UIApplicationDelegate>   m_AppDelegate;
     dmGameCenter::CommandQueue  m_CommandQueue;
     int                         m_ScheduledID;
@@ -154,6 +154,31 @@ NSString *const PresentAuthenticationViewController = @"present_authentication_v
     }
 }
 
+- (void)getPlayerScore:(NSString*)leaderboardId withTimeScope:(int)timeScope
+{
+    GKLeaderboard *leaderboardRequest = [[GKLeaderboard alloc] init];
+    leaderboardRequest.identifier = leaderboardId;
+    leaderboardRequest.timeScope = timeScope;
+    [leaderboardRequest loadScoresWithCompletionHandler:^(NSArray *scores, NSError *error) {
+        if (error) {
+            NSLog(@"%@", error);
+        } else if (scores) {
+            GKScore *localPlayerScore = leaderboardRequest.localPlayerScore;
+            if (localPlayerScore != nil) {
+                NSLog(@"Local player's score: %lld", localPlayerScore.value);
+
+                dmGameCenter::Command cmd;
+                cmd.m_Callback = g_GameCenter.m_ScoreCallback;
+                cmd.m_Command = dmGameCenter::COMMAND_TYPE_SCORE_RESULT;
+                cmd.m_leaderboardId = [[localPlayerScore leaderboardIdentifier] UTF8String];
+                cmd.m_score = localPlayerScore.value;
+                dmGameCenter::QueuePush(&g_GameCenter.m_CommandQueue, &cmd);
+            }
+        }
+    }];
+}
+
+
 - (void) reportScore:(NSString*)leaderboardId score:(int)score
 {
     GKScore* scoreReporter = [[GKScore alloc] initWithLeaderboardIdentifier:leaderboardId];
@@ -256,6 +281,37 @@ static int login(lua_State* L)
     return 0;
 }
 
+/** Set score lua callback.
+ */
+static int setScoreCallback(lua_State* L)
+{
+    DM_LUA_STACK_CHECK(L, 0);
+
+    if (g_GameCenter.m_ScoreCallback)
+        dmScript::DestroyCallback(g_GameCenter.m_ScoreCallback);
+
+    g_GameCenter.m_ScoreCallback = dmScript::CreateCallback(L, 1);
+    return 0;
+}
+
+/** Submit a score for a specified Leader Board
+ */
+static int getPlayerScore(lua_State* L)
+{
+    DM_LUA_STACK_CHECK(L, 0);
+    int n = lua_gettop(L);
+
+    const char *leaderboardId = 0;
+    int timeScope = dmGameCenter::LEADERBOARD_TIME_SCOPE_ALLTIME;
+
+    if(lua_istable(L, 1)) {
+        leaderboardId = toTableString(L, 1, "leaderboardId");
+        timeScope = checkTableNumber(L, 2, "timeScope", dmGameCenter::LEADERBOARD_TIME_SCOPE_ALLTIME);
+        [[GameKitManager sharedGameKitManager] getPlayerScore:@(leaderboardId) withTimeScope:timeScope];
+    }
+
+    return 0;
+}
 
 /** Submit a score for a specified Leader Board
  */
@@ -347,9 +403,10 @@ static const luaL_reg Module_methods[] =
     {"showLeaderboards", showLeaderboards},
     {"showAchievements", showAchievements},
     {"submitAchievement", submitAchievement},
+    {"setScoreCallback", setScoreCallback},
+    {"getPlayerScore", getPlayerScore}
     //{"loadAchievements", loadAchievements},
     //{"resetAchievements", resetAchievements},
-
     {0, 0}
 };
 
@@ -401,11 +458,11 @@ static dmExtension::Result InitializeGameCenter(dmExtension::Params* params)
 
 static dmExtension::Result FinalizeGameCenter(dmExtension::Params* params)
 {
-    if (g_GameCenter.m_Listener)
-        dmScript::DestroyCallback(g_GameCenter.m_Listener);
+    if (g_GameCenter.m_ScoreCallback)
+        dmScript::DestroyCallback(g_GameCenter.m_ScoreCallback);
     if (g_GameCenter.m_Callback)
         dmScript::DestroyCallback(g_GameCenter.m_Callback);
-    g_GameCenter.m_Listener = 0;
+    g_GameCenter.m_ScoreCallback = 0;
     g_GameCenter.m_Callback = 0;
     return dmExtension::RESULT_OK;
 }

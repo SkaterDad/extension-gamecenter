@@ -47,7 +47,78 @@
             .....
             if gamecenter then gamecenter.login(login_cb) end
             ```
+
+#*****************************************************************************************************
+
+  - name: setScoreCallback
+    type: function
+    desc: Set callback function for fetching score data.
     
+    parameters:
+    - desc: score callback function.
+      name: callback
+      type: function
+      parameters:
+      - name: self
+        type: object
+        desc: The current object.
+
+      - name: data
+        type: table
+        desc: A table containing leaderboard score data
+
+      - name: error
+        type: table
+        desc: A table containing eventual error information.
+
+    examples:
+    - desc: |-
+            ```lua
+            local function score_cb(self, data, error)
+              if(error) then
+                  print(error.error)
+              elseif data then
+                  if data.score then
+                      print("Leaderboard:", data.leaderboardId)
+                      print("Player score:", data.score)
+                  end
+              end
+            end
+
+            .....
+            if gamecenter then
+              gamecenter.setScoreCallback(score_cb)
+            end
+            ```
+
+#*****************************************************************************************************
+
+  - name: getPlayerScore
+    type: function
+    desc: Get local player score for a specifed Leaderboard
+    
+    parameters:
+    - name: param
+      type: table
+      desc: .
+      parameters:
+      - name: leaderboardId
+        type: string
+        desc: id
+
+      - name: timeScope
+        type: number
+        desc: time scope constant
+
+    examples:
+    - desc: |-
+            Check gamecenter login complete before calling any method.
+            ```lua
+            if login_cb_complete then
+              gamecenter.setScoreCallback(score_cb) -- Do this one time during init!
+              gamecenter.getPlayerScore({leaderboardId="com.example.gamecenter.leaderboardId", timeScope = gamecenter.LEADERBOARD_TIME_SCOPE_ALLTIME})
+            end
+            ```
 
 #*****************************************************************************************************
 

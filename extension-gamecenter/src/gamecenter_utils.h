@@ -23,6 +23,7 @@ namespace dmGameCenter
     enum CommandType
     {
         COMMAND_TYPE_REGISTRATION_RESULT  = 0,
+        COMMAND_TYPE_SCORE_RESULT  = 1,
     };
 
     struct Command
