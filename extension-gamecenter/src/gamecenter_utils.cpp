@@ -64,7 +64,7 @@ static void HandleScoreResult(const dmGameCenter::Command* cmd)
         return;
     }
     
-    if (cmd->m_playerID) {     
+    if (cmd->m_leaderboardId) {     
         dmLogInfo("score callback Result %s", cmd->m_score);
         lua_newtable(L);
         lua_pushinteger(L, cmd->m_score);
